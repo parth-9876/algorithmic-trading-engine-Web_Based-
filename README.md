@@ -68,6 +68,35 @@ cd executable
 
 ---
 
+## 🛠️ Building from Source (Optional)
+
+If you prefer to compile the engine yourself, the project uses CMake and is designed to build on Windows with MSVC.
+
+### Prerequisites
+- CMake (3.10+)
+- Visual Studio (with Desktop development with C++ workload)
+
+### Compilation
+Open a **Developer PowerShell for VS** and run:
+
+```powershell
+# 1. Create a build directory
+mkdir build
+cd build
+
+# 2. Generate build files
+cmake ..
+
+# 3. Compile in Release mode
+cmake --build . --config Release
+
+# 4. Run the newly compiled executable
+cd ..
+.\build\Release\AlgoExchange.exe
+```
+
+---
+
 ## 🎮 Usage Guide
 
 Once inside the interactive REPL (`AlgoExchange>`), try the following commands:
@@ -109,7 +138,8 @@ DROP_EXIT                    # Wipe generated stress test logs and close
 
 The engine is resilient against invalid inputs, handles extreme edge cases (like market orders crossing market orders), and avoids floating-point exceptions. 
 
-To run the automated test suite, pipe the provided test file into the executable:
+To run the automated test suite, pipe the provided test file into the executable. Using the pre-compiled version:
 ```powershell
-Get-Content data\test_comprehensive.txt | .\build\Release\AlgoExchange.exe
+Get-Content executable\test_comprehensive.txt | .\executable\AlgoExchange.exe
 ```
+*(If you built from source, use `Get-Content data\test_comprehensive.txt | .\build\Release\AlgoExchange.exe`)*
