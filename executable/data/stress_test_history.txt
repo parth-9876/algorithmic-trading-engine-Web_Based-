@@ -1,3 +1,0 @@
-Ran 10000 orders. Avg latency: 0.69811 us. Total time: 6.9811 ms.
-Ran 1000 orders. Avg latency: 3.4525 us. Total time: 3.4525 ms.
-Ran 10000 orders. Avg latency: 0.76501 us. Total time: 7.6501 ms.
