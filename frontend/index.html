@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoExchange — High Performance Trading Engine</title>
+    <meta name="description" content="A high-performance exchange simulator and market analytics engine with real-time order matching, autocomplete, and stress testing.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <span class="loading-icon">⚡</span>
+            </div>
+            <h2>AlgoExchange</h2>
+            <p>Initializing trading engine...</p>
+            <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- App Shell -->
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">AlgoExchange</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="trade">
+                    <span class="nav-icon">📊</span>
+                    <span>Trade</span>
+                </button>
+                <button class="nav-item" data-tab="orders">
+                    <span class="nav-icon">📋</span>
+                    <span>Orders</span>
+                </button>
+                <button class="nav-item" data-tab="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-tab="tools">
+                    <span class="nav-icon">🔧</span>
+                    <span>Tools</span>
+                </button>
+                <button class="nav-item" data-tab="terminal">
+                    <span class="nav-icon">💻</span>
+                    <span>Terminal</span>
+                </button>
+                <button class="nav-item" data-tab="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="engine-status" id="engineStatus">
+                    <span class="status-dot offline"></span>
+                    <span>Engine Offline</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 id="pageTitle">Trade</h1>
+                </div>
+                <div class="topbar-right">
+                    <button class="topbar-btn" id="helpBtn" title="Help">
+                        <span>❓</span>
+                    </button>
+                    <div class="topbar-badge" id="tradeCount">
+                        <span class="badge-label">Trades</span>
+                        <span class="badge-value" id="tradeCountValue">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab: Trade -->
+            <section class="tab-content active" id="tab-trade">
+                <div class="content-grid">
+                    <!-- Search Card -->
+                    <div class="card search-card">
+                        <div class="card-header">
+                            <h3>🔍 Search Symbol</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-wrapper">
+                                <input type="text" id="searchInput" placeholder="Type a symbol... (e.g. AAPL, GOOG)" autocomplete="off">
+                                <button id="searchBtn" class="btn btn-primary">Search</button>
+                            </div>
+                            <div id="searchResults" class="search-results hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Trade Card -->
+                    <div class="card trade-card">
+                        <div class="card-header">
+                            <h3>💹 Place Order</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="trade-type-toggle">
+                                <button class="toggle-btn active" data-type="limit">Limit</button>
+                                <button class="toggle-btn" data-type="market">Market</button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Symbol</label>
+                                    <input type="text" id="tradeSymbol" placeholder="AAPL">
+                                </div>
+                                <div class="form-group">
+                                    <label>Quantity</label>
+                                    <input type="number" id="tradeQty" placeholder="100" min="1">
+                                </div>
+                                <div class="form-group" id="priceGroup">
+                                    <label>Price</label>
+                                    <input type="number" id="tradePrice" placeholder="190.00" step="0.01" min="0.01">
+                                </div>
+                            </div>
+                            <div class="trade-actions">
+                                <button id="buyBtn" class="btn btn-buy btn-lg">
+                                    <span class="btn-icon">▲</span> BUY
+                                </button>
+                                <button id="sellBtn" class="btn btn-sell btn-lg">
+                                    <span class="btn-icon">▼</span> SELL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Overview Card -->
+                    <div class="card overview-card span-full">
+                        <div class="card-header">
+                            <h3>📊 Market Overview</h3>
+                            <button class="btn btn-ghost btn-sm" id="refreshMarketBtn">Refresh</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-stats">
+                                <button class="stat-card" id="topGainersBtn">
+                                    <span class="stat-icon gain">▲</span>
+                                    <span class="stat-label">Top Gainers</span>
+                                </button>
+                                <button class="stat-card" id="topLosersBtn">
+                                    <span class="stat-icon loss">▼</span>
+                                    <span class="stat-label">Top Losers</span>
+                                </button>
+                                <button class="stat-card" id="showTradesBtn">
+                                    <span class="stat-icon neutral">⇄</span>
+                                    <span class="stat-label">Trade History</span>
+                                </button>
+                                <button class="stat-card" id="performanceBtn">
+                                    <span class="stat-icon neutral">⏱</span>
+                                    <span class="stat-label">Performance</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Orders -->
+            <section class="tab-content" id="tab-orders">
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📖 Order Book</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group flex-grow">
+                                    <label>Symbol (optional)</label>
+                                    <input type="text" id="obSymbol" placeholder="Leave empty for all symbols">
+                                </div>
+                                <div class="form-group flex-none">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-primary" id="showOrderbookBtn">View Orderbook</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>✏️ Manage Orders</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Order ID</label>
+                                    <input type="number" id="manageOrderId" placeholder="e.g. 1">
+                                </div>
+                                <div class="form-group flex-none">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-sell" id="cancelOrderBtn">Cancel</button>
+                                </div>
+                            </div>
+                            <hr class="divider">
+                            <p class="section-subtitle">Modify Existing Order</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Order ID</label>
+                                    <input type="number" id="modifyOrderId" placeholder="e.g. 1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Side</label>
+                                    <select id="manageSide">
+                                        <option value="BUY">BUY</option>
+                                        <option value="SELL">SELL</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>New Qty</label>
+                                    <input type="number" id="manageQty" placeholder="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>New Price</label>
+                                    <input type="number" id="managePrice" placeholder="190.00" step="0.01">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary full-width" id="modifyOrderBtn">Modify Order</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Analytics -->
+            <section class="tab-content" id="tab-analytics">
+                <div class="content-grid">
+
+                    <!-- Price History -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📉 Price History</h3>
+                            <span class="card-badge">Timeline</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Instantly retrieve the complete trading history for any stock. Track exactly when and at what volume price movements occurred.</p>
+                            <div class="algo-details">
+                                <div class="algo-pill"><span class="pill-label">Speed</span> <code>Lightning Fast</code></div>
+                                <div class="algo-pill"><span class="pill-label">Detail</span> <code>Tick-by-Tick</code></div>
+                            </div>
+                            <hr class="divider">
+                            <div class="form-row">
+                                <div class="form-group flex-grow">
+                                    <label>Symbol</label>
+                                    <input type="text" id="histSymbol" placeholder="e.g. MSFT, AAPL, TSLA">
+                                </div>
+                                <div class="form-group flex-none">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-primary" id="priceHistoryBtn">Get History</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Range Query -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📐 Range Analysis</h3>
+                            <span class="card-badge">Custom Range</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Analyze market behavior over specific time periods. Instantly calculate the highest peak, lowest dip, or total traded volume within your chosen timeframe.</p>
+                            <div class="algo-details">
+                                <div class="algo-pill"><span class="pill-label">Analysis</span> <code>Instant Aggregation</code></div>
+                                <div class="algo-pill"><span class="pill-label">Accuracy</span> <code>100% Precise</code></div>
+                            </div>
+                            <hr class="divider">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Symbol</label>
+                                    <input type="text" id="rqSymbol" placeholder="MSFT">
+                                </div>
+                                <div class="form-group">
+                                    <label>Query Type</label>
+                                    <select id="rqType">
+                                        <option value="MAX">MAX — Highest Price</option>
+                                        <option value="MIN">MIN — Lowest Price</option>
+                                        <option value="SUM">SUM — Total Value</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>From Index</label>
+                                    <input type="number" id="rqLeft" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>To Index</label>
+                                    <input type="number" id="rqRight" placeholder="5">
+                                </div>
+                                <div class="form-group flex-none">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-primary" id="rangeQueryBtn">Run Query</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dependency Path -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔗 Market Correlations</h3>
+                            <span class="card-badge">Relationship Graph</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Discover hidden connections between different assets. Trace the most direct supply-chain or sector relationships connecting any two companies in the market.</p>
+                            <div class="algo-details">
+                                <div class="algo-pill"><span class="pill-label">Insights</span> <code>Supply Chain</code></div>
+                                <div class="algo-pill"><span class="pill-label">Mapping</span> <code>Deep Sector Links</code></div>
+                            </div>
+                            <hr class="divider">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Source Symbol</label>
+                                    <input type="text" id="depSym1" placeholder="AAPL">
+                                </div>
+                                <div class="form-group center-icon">
+                                    <label>&nbsp;</label>
+                                    <span class="arrow-icon">→</span>
+                                </div>
+                                <div class="form-group">
+                                    <label>Target Symbol</label>
+                                    <input type="text" id="depSym2" placeholder="NVDA">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary full-width" id="depPathBtn">Find Shortest Path</button>
+                        </div>
+                    </div>
+
+                    <!-- Optimize Order -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚙️ Smart Execution</h3>
+                            <span class="card-badge">Cost Minimization</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Automatically split massive orders into optimal smaller chunks. Minimizes exchange fees and prevents your large trade from artificially moving the market price.</p>
+                            <div class="algo-details">
+                                <div class="algo-pill"><span class="pill-label">Goal</span> <code>Lowest Fees</code></div>
+                                <div class="algo-pill"><span class="pill-label">Impact</span> <code>Zero Slippage</code></div>
+                            </div>
+                            <hr class="divider">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Side</label>
+                                    <select id="optSide">
+                                        <option value="BUY">BUY</option>
+                                        <option value="SELL">SELL</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Symbol</label>
+                                    <input type="text" id="optSymbol" placeholder="AAPL">
+                                </div>
+                                <div class="form-group">
+                                    <label>Total Quantity</label>
+                                    <input type="number" id="optQty" placeholder="5000">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary full-width" id="optimizeBtn">Optimize Execution</button>
+                        </div>
+                    </div>
+
+                    <!-- Market Dashboards -->
+                    <div class="card span-full">
+                        <div class="card-header">
+                            <h3>🏆 Market Movers</h3>
+                            <span class="card-badge">Live Rankings</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Get an instant, bird's-eye view of the market. Track which assets are breaking out, which are crashing, and view overall exchange latency and health metrics in real-time.</p>
+                            <div class="algo-details">
+                                <div class="algo-pill"><span class="pill-label">Updates</span> <code>Real-time</code></div>
+                                <div class="algo-pill"><span class="pill-label">Metrics</span> <code>Actionable Data</code></div>
+                            </div>
+                            <hr class="divider">
+                            <div class="quick-stats">
+                                <button class="stat-card" id="analyticsGainersBtn">
+                                    <span class="stat-icon gain">▲</span>
+                                    <span class="stat-label">Top Gainers</span>
+                                </button>
+                                <button class="stat-card" id="analyticsLosersBtn">
+                                    <span class="stat-icon loss">▼</span>
+                                    <span class="stat-label">Top Losers</span>
+                                </button>
+                                <button class="stat-card" id="analyticsSummaryBtn">
+                                    <span class="stat-icon neutral">📊</span>
+                                    <span class="stat-label">Full Summary</span>
+                                </button>
+                                <button class="stat-card" id="analyticsPerformanceBtn">
+                                    <span class="stat-icon neutral">⏱</span>
+                                    <span class="stat-label">Latency Stats</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Tab: Tools -->
+            <section class="tab-content" id="tab-tools">
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏎️ Stress Test</h3>
+                            <span class="card-badge">Benchmark</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Flood the matching engine with randomized orders and measure microsecond-precision latency.</p>
+                            <div class="form-row">
+                                <div class="form-group flex-grow">
+                                    <label>Number of Orders</label>
+                                    <input type="number" id="stressCount" placeholder="10000" value="10000" min="100">
+                                </div>
+                            </div>
+                            <button class="btn btn-accent full-width" id="stressTestBtn">
+                                🚀 Launch Stress Test
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 Market Summary</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Get a comprehensive overview of current market state including volume, gainers, and losers.</p>
+                            <button class="btn btn-primary full-width" id="marketSummaryBtn">
+                                View Summary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Terminal -->
+            <section class="tab-content" id="tab-terminal">
+                <div class="terminal-card">
+                    <div class="terminal-chrome">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">AlgoExchange Engine</span>
+                        <button class="btn btn-ghost btn-sm" id="clearLogBtn">Clear</button>
+                    </div>
+                    <pre id="terminalOutput">Welcome to AlgoExchange Web Interface...\n</pre>
+                    <div class="terminal-input-row">
+                        <span class="terminal-prompt">AlgoExchange&gt;</span>
+                        <input type="text" id="commandInput" placeholder="Type any command..." autocomplete="off">
+                        <button class="btn btn-primary btn-sm" id="sendCommandBtn">Send</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Settings -->
+            <section class="tab-content" id="tab-settings">
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔄 Reset Engine</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Completely restart the C++ trading engine. This will wipe all in-memory orders, trades, and analytics back to a clean state. Historical data files on disk are preserved.</p>
+                            <button class="btn btn-sell full-width" id="resetEngineBtn">
+                                🔄 Reset Engine
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🧹 Clean & Reset</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description">Clear all generated stress test logs and order files from disk, then restart the engine with a completely clean slate.</p>
+                            <button class="btn btn-sell full-width" id="dropResetBtn">
+                                🗑️ Clean Files & Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card span-full">
+                        <div class="card-header">
+                            <h3>ℹ️ About</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-description" style="margin-bottom:0">AlgoExchange v1.0 — A high-performance, command-line exchange simulator and market analytics engine built in C++17. This web interface communicates with the native engine via a lightweight Python bridge.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Floating Response Panel (shows on non-terminal tabs) -->
+            <div class="response-panel" id="responsePanel">
+                <div class="response-header">
+                    <h4>Output</h4>
+                    <button class="btn btn-ghost btn-sm" id="closeResponseBtn">✕</button>
+                </div>
+                <pre id="responseContent"></pre>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

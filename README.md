@@ -1,12 +1,33 @@
 # AlgoExchange 📈
 
-**AlgoExchange** is a high-performance, command-line exchange simulator and market analytics engine built in C++17. It demonstrates the application of advanced data structures and algorithmic design to solve real-world problems in financial technology, without relying on external libraries (pure STL).
+**AlgoExchange** is a high-performance exchange simulator and market analytics engine. It features a blazing-fast C++17 core for order matching and data crunching, paired with a sleek, modern, web-based fintech dashboard built in Python and Vanilla HTML/CSS/JS.
 
-This project was built from scratch to showcase clean architecture, optimal time complexities, and robust edge-case handling.
+This project was built from scratch to showcase clean architecture, optimal time complexities, robust edge-case handling, and a premium user experience.
 
 ---
 
-## 🏗️ Architecture & Features
+## 🌐 Web Dashboard
+
+AlgoExchange features a beautiful, responsive web interface that communicates with the native C++ engine via a lightweight Python bridge.
+
+### Features
+- **Premium Fintech Aesthetic**: Dark mode, glassmorphism, and smooth animations.
+- **Real-time Order Management**: Place Limit/Market orders with intuitive forms.
+- **Actionable Analytics**: Explore price histories, calculate optimal order execution, and find market dependencies with a user-friendly UI.
+- **Terminal Emulator**: A built-in terminal to interact directly with the C++ engine from the browser.
+- **Instant Engine Reset**: Hard reset the backend engine right from the settings tab.
+
+### Running the Web Dashboard
+1. Ensure the pre-compiled `AlgoExchange.exe` is in the `executable/` directory.
+2. Start the Python server:
+   ```powershell
+   python server.py
+   ```
+3. Open your browser and go to `http://localhost:8000`.
+
+---
+
+## 🏗️ Architecture & Features (C++ Core)
 
 AlgoExchange is divided into several independent modules, each leveraging specific data structures to achieve optimal performance:
 
@@ -50,9 +71,9 @@ Finds the cheapest way to break down a massive block order (e.g. 10,000 shares) 
 
 ---
 
-## 🚀 Running the Pre-compiled Executable (Windows)
+## 🚀 Running the Pre-compiled Executable (Windows CLI)
 
-The project includes a pre-compiled executable so you don't have to build it from scratch.
+If you prefer the command line, you can run the engine directly without the web dashboard.
 
 ### Instructions
 
@@ -97,9 +118,9 @@ cd ..
 
 ---
 
-## 🎮 Usage Guide
+## 🎮 CLI Usage Guide
 
-Once inside the interactive REPL (`AlgoExchange>`), try the following commands:
+If using the engine via the command line (or the Web Dashboard's Terminal), try these commands:
 
 **Order Management**
 ```text
@@ -138,7 +159,7 @@ DROP_EXIT                    # Wipe generated stress test logs and close
 
 The engine is resilient against invalid inputs, handles extreme edge cases (like market orders crossing market orders), and avoids floating-point exceptions. 
 
-To run the automated test suite, pipe the provided test file into the executable. Using the pre-compiled version:
+To run the automated test suite natively, pipe the provided test file into the executable. Using the pre-compiled version:
 ```powershell
 Get-Content executable\test_comprehensive.txt | .\executable\AlgoExchange.exe
 ```
