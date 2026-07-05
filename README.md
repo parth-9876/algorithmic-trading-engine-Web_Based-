@@ -1,6 +1,6 @@
-# AlgoExchange 📈
+# Market-Exchange-Engine 📈
 
-**AlgoExchange** is a high-performance exchange simulator and market analytics engine. It features a blazing-fast C++17 core for order matching and data crunching, paired with a sleek, modern, web-based fintech dashboard built in Python and Vanilla HTML/CSS/JS.
+**Market-Exchange-Engine** is a high-performance exchange simulator and market analytics engine. It features a blazing-fast C++17 core for order matching and data crunching, paired with a sleek, modern, web-based fintech dashboard built in Python and Vanilla HTML/CSS/JS.
 
 This project was built from scratch to showcase clean architecture, optimal time complexities, robust edge-case handling, and a premium user experience.
 
@@ -8,7 +8,7 @@ This project was built from scratch to showcase clean architecture, optimal time
 
 ## 🌐 Web Dashboard
 
-AlgoExchange features a beautiful, responsive web interface that communicates with the native C++ engine via a lightweight Python bridge.
+Market-Exchange-Engine features a beautiful, responsive web interface that communicates with the native C++ engine via a lightweight Python bridge.
 
 ### Features
 - **Premium Fintech Aesthetic**: Dark mode, glassmorphism, and smooth animations.
