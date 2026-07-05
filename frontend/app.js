@@ -408,3 +408,206 @@ async function resetEngine(clean = false) {
 
 document.getElementById('resetEngineBtn').addEventListener('click', () => resetEngine(false));
 document.getElementById('dropResetBtn').addEventListener('click', () => resetEngine(true));
+
+// ============================================================
+// Graphs Tab
+// ============================================================
+
+document.getElementById('drawGraphBtn').addEventListener('click', () => {
+    const symbol = document.getElementById('graphSymbol').value.toUpperCase().trim();
+    if (!symbol) return showToast('Enter a symbol to graph', 'error');
+    drawGraph(symbol);
+});
+
+async function drawGraph(symbol) {
+    const btn = document.getElementById('drawGraphBtn');
+    btn.disabled = true;
+    btn.textContent = 'Drawing...';
+    
+    try {
+        const res = await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: `PRICE_HISTORY ${symbol}` })
+        });
+        const data = await res.json();
+        
+        if (data.error || !data.response.includes('Price History:')) {
+            showToast(`No trades found for ${symbol}`, 'error');
+            document.getElementById('graphEmptyState').textContent = `No trades found for ${symbol} yet`;
+            document.getElementById('graphEmptyState').style.display = 'flex';
+            
+            // Clear any old graph
+            const canvas = document.getElementById('priceChart');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            btn.disabled = false;
+            btn.textContent = 'Draw Graph';
+            return;
+        }
+
+        // Parse prices from output format: [  0]     185.50
+        const regex = /\[\s*\d+\]\s+(\d+\.\d+)/g;
+        let prices = [];
+        let match;
+        while ((match = regex.exec(data.response)) !== null) {
+            prices.push(parseFloat(match[1]));
+        }
+
+        if (prices.length === 0) {
+            showToast(`No trades found for ${symbol}`, 'error');
+            document.getElementById('graphEmptyState').textContent = `No trades found for ${symbol} yet`;
+            document.getElementById('graphEmptyState').style.display = 'flex';
+            
+            // Clear any old graph
+            const canvas = document.getElementById('priceChart');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            btn.disabled = false;
+            btn.textContent = 'Draw Graph';
+            return;
+        }
+
+        // Keep at most 3,000 prices (last 3000)
+        if (prices.length > 3000) {
+            prices = prices.slice(prices.length - 3000);
+        }
+        
+        const originalCount = prices.length;
+
+        // Downsample to 100 points for a cleaner visual graph
+        const MAX_POINTS = 100;
+        if (prices.length > MAX_POINTS) {
+            const smoothed = [];
+            const chunkSize = Math.ceil(prices.length / MAX_POINTS);
+            for (let i = 0; i < prices.length; i += chunkSize) {
+                const chunk = prices.slice(i, i + chunkSize);
+                const avg = chunk.reduce((a, b) => a + b, 0) / chunk.length;
+                smoothed.push(avg);
+            }
+            prices = smoothed;
+        }
+
+        renderCanvasChart(prices, symbol, originalCount);
+
+    } catch (err) {
+        showToast(`Error: ${err.message}`, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Draw Graph';
+}
+
+function renderCanvasChart(prices, symbol, originalCount) {
+    const canvas = document.getElementById('priceChart');
+    const ctx = canvas.getContext('2d');
+    const parent = canvas.parentElement;
+    
+    // Set actual canvas resolution to match its displayed size
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    
+    document.getElementById('graphEmptyState').style.display = 'none';
+
+    // Dimensions and padding
+    const width = canvas.width;
+    const height = canvas.height;
+    const padTop = 60; // Increased to give title more room
+    const padBottom = 30;
+    const padLeft = 60;
+    const padRight = 20;
+
+    const graphWidth = width - padLeft - padRight;
+    const graphHeight = height - padTop - padBottom;
+
+    // Data limits with 10% margin so it doesn't touch the very top/bottom
+    const rawMin = Math.min(...prices);
+    const rawMax = Math.max(...prices);
+    const rawRange = rawMax - rawMin || 1;
+    const margin = rawRange * 0.1; 
+    
+    const minPrice = rawMin - margin;
+    const maxPrice = rawMax + margin;
+    const priceRange = maxPrice - minPrice || 1; 
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Determine color based on trend
+    const isUptrend = prices[prices.length - 1] >= prices[0];
+    const lineColor = isUptrend ? '#22c55e' : '#ef4444'; // Green or Red
+    const glowColor = isUptrend ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+    const gradientTop = isUptrend ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+
+    // 1. Draw Grid Lines & Y-Axis Labels
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+
+    const steps = 5;
+    for (let i = 0; i <= steps; i++) {
+        const y = padTop + graphHeight - (i / steps) * graphHeight;
+        const val = minPrice + (i / steps) * priceRange;
+        
+        // Draw grid line
+        ctx.beginPath();
+        ctx.moveTo(padLeft, y);
+        ctx.lineTo(width - padRight, y);
+        ctx.stroke();
+
+        // Draw label
+        ctx.fillText(val.toFixed(2), padLeft - 10, y);
+    }
+
+    // 2. Map coordinates
+    const getX = (index) => padLeft + (index / (prices.length - 1 || 1)) * graphWidth;
+    const getY = (price) => padTop + graphHeight - ((price - minPrice) / priceRange) * graphHeight;
+
+    // 3. Draw gradient fill
+    const fillGradient = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
+    fillGradient.addColorStop(0, gradientTop);
+    fillGradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+    ctx.beginPath();
+    ctx.moveTo(getX(0), getY(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+        ctx.lineTo(getX(i), getY(prices[i]));
+    }
+    ctx.lineTo(getX(prices.length - 1), height - padBottom);
+    ctx.lineTo(getX(0), height - padBottom);
+    ctx.closePath();
+    ctx.fillStyle = fillGradient;
+    ctx.fill();
+
+    // 4. Draw the actual line
+    ctx.beginPath();
+    ctx.moveTo(getX(0), getY(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+        ctx.lineTo(getX(i), getY(prices[i]));
+    }
+    
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5; // Thinner line since 1000 points is very dense
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    
+    // Add glow
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    
+    ctx.stroke();
+    
+    // Remove shadow for title
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // 5. Title
+    ctx.font = '600 14px Inter, sans-serif';
+    ctx.fillStyle = '#f1f5f9';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${symbol} Price History (Last ${originalCount} Trades)`, padLeft, 30);
+}

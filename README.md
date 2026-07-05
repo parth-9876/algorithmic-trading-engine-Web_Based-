@@ -14,6 +14,7 @@ AlgoExchange features a beautiful, responsive web interface that communicates wi
 - **Premium Fintech Aesthetic**: Dark mode, glassmorphism, and smooth animations.
 - **Real-time Order Management**: Place Limit/Market orders with intuitive forms.
 - **Actionable Analytics**: Explore price histories, calculate optimal order execution, and find market dependencies with a user-friendly UI.
+- **Interactive Graphs**: Visualize price histories with smooth, anti-aliased Canvas charts that automatically downsample large datasets (e.g., thousands of trades into a clean 100-point moving average).
 - **Terminal Emulator**: A built-in terminal to interact directly with the C++ engine from the browser.
 - **Instant Engine Reset**: Hard reset the backend engine right from the settings tab.
 
