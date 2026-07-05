@@ -116,6 +116,9 @@ class Exchange {
     // Trade log
     std::vector<Trade> trades;
 
+    // O(1) tracker for the Last Traded Price
+    std::unordered_map<std::string, double> lastTradedPrice;
+
     // Counters
     int       nextOrderId    = 1;
     int       nextTradeId    = 1;
@@ -133,6 +136,7 @@ public:
                      int qty, double price) {
         trades.push_back({nextTradeId++, symbol, buyId, sellId, qty, price,
                           timestampCounter});
+        lastTradedPrice[symbol] = price; // Store the LTP in O(1)
         if (!muteOutput) {
             std::cout << "  >> Trade #" << (nextTradeId - 1) << ": " << symbol
                       << "  Qty=" << qty
@@ -164,7 +168,12 @@ public:
             if (tradePrice >= DBL_MAX / 2.0 || tradePrice <= 0.001) {
                 tradePrice = (bestBuy->timestamp < bestSell->timestamp) ? bestSell->price : bestBuy->price;
                 if (tradePrice >= DBL_MAX / 2.0 || tradePrice <= 0.001) {
-                    tradePrice = 0.0; // Both were market orders
+                    // Both were market orders! Let's fetch the LTP in O(1)
+                    if (lastTradedPrice.find(symbol) != lastTradedPrice.end()) {
+                        tradePrice = lastTradedPrice[symbol]; 
+                    } else {
+                        tradePrice = 100.0; // Ultimate fallback if this is the very first trade
+                    }
                 }
             }
 
